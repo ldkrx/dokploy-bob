@@ -1,0 +1,21 @@
+targets:
+  traefik: ./tests/results/traefik.yaml
+  nginx: ./tests/results/nginx.yaml
+
+sites:
+  service-1:
+    domains:
+      - example.com
+      - www.example.com
+    provider: php
+    port: 8080
+    php:
+      version: 8.1
+      root: /public
+
+  service-2:
+    domains:
+      - blog.example.com
+      - www.blog.example.com
+    provider: node
+    port: 3000
