@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type TraefikCfg struct {
+type TraefikConfig struct {
 	HTTP HTTPConfig `yaml:"http"`
 }
 
@@ -38,8 +38,8 @@ type Server struct {
 	URL string `yaml:"url"`
 }
 
-func NewTraefik() *TraefikCfg {
-	return &TraefikCfg{
+func NewTraefik() *TraefikConfig {
+	return &TraefikConfig{
 		HTTP: HTTPConfig{
 			Routers:  make(map[string]Router),
 			Services: make(map[string]Service),
@@ -47,7 +47,7 @@ func NewTraefik() *TraefikCfg {
 	}
 }
 
-func (tc *TraefikCfg) AddService(name *string, svc *config.Service) error {
+func (tc *TraefikConfig) AddService(name *string, svc *config.Service) error {
 	var rules []string
 	for _, domain := range svc.Domains {
 		rules = append(rules, "Host(`"+domain+"`)")
@@ -57,7 +57,7 @@ func (tc *TraefikCfg) AddService(name *string, svc *config.Service) error {
 		Rule:        strings.Join(rules, " || "),
 		EntryPoints: []string{"web", "websecure"},
 		Service:     *name,
-		TLS:         &TLS{CertResolver: "myresolver"},
+		TLS:         &TLS{CertResolver: "letsencrypt"},
 	}
 
 	service := Service{
@@ -74,7 +74,7 @@ func (tc *TraefikCfg) AddService(name *string, svc *config.Service) error {
 	return nil
 }
 
-func (tc *TraefikCfg) ToYAML() ([]byte, error) {
+func (tc *TraefikConfig) ToYAML() ([]byte, error) {
 	data, err := MarshalToYAML(tc)
 	if err != nil {
 		return nil, err

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ldriko/dokploy-bob/config"
-	"ldriko/dokploy-bob/generator"
+	"ldriko/dokploy-bob/internal/config"
+	"ldriko/dokploy-bob/internal/generator"
 	"log"
 	"os"
 )
@@ -11,7 +11,7 @@ func main() {
 	args := os.Args
 
 	if len(args) < 2 {
-		log.Fatal("Usage: go run main.go <config-file>")
+		log.Fatal("Usage: dokploy-bob <config-file>")
 	}
 
 	configFile := args[1]
