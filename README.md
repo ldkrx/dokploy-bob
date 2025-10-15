@@ -4,17 +4,19 @@ Bob will generate traefik and nginx config from a yaml file like this:
 
 ```yaml
 providers:
-  traefik:
-    target: /etc/dokploy/traefik/dynamic/host.yaml
-  nginx:
-    target: /etc/nginx/sites-available/generated
+  traefik: 
+    target: ./tests/results/traefik.yaml
+  nginx: 
+    target: ./tests/results/nginx
 
-sites:
+services:
   service-1:
     domains:
       - example.com
       - www.example.com
-    provider: php
+    providers:
+      - traefik
+      - nginx
     port: 8080
     php:
       version: 8.1
@@ -24,7 +26,9 @@ sites:
     domains:
       - blog.example.com
       - www.blog.example.com
-    provider: node
+    providers: 
+      - traefik
+      - node
     port: 3000
 ```
 
