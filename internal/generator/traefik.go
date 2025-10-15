@@ -64,7 +64,7 @@ func (tc *TraefikConfig) AddService(name string, svc config.Service) error {
 	service := TraefikService{
 		LoadBalancer: TraefikLoadBalancer{
 			Servers: []TraefikServer{
-				{URL: "http://" + name + ":" + fmt.Sprint(svc.Port)},
+				{URL: "http://172.17.0.1:" + fmt.Sprint(svc.Port)},
 			},
 		},
 	}

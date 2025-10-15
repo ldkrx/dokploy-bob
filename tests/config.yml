@@ -15,7 +15,7 @@ services:
     port: 8080
     php:
       version: 8.1
-      root: /public
+      root: /var/www/service-1/public
 
   service-2:
     domains:
