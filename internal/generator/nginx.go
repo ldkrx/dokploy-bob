@@ -68,7 +68,7 @@ func (nc *NginxConfig) Export(path string) error {
 
     location ~ \\.php$ {
         include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/run/php/%s-fpm.sock;
+        fastcgi_pass unix:/run/php/php%s-fpm.sock;
     }
 
     location ~ /\\.ht {
