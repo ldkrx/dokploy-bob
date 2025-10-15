@@ -90,7 +90,7 @@ func (tc *TraefikConfig) Export(path string) error {
 		return err
 	}
 
-	err = exporter.Process(path, &traefikYaml)
+	err = exporter.Process(path, traefikYaml)
 	if err != nil {
 		return err
 	}

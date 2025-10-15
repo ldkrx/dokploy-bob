@@ -6,19 +6,63 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type AvailableProviders int
+
+const (
+	Traefik AvailableProviders = iota
+	Nginx
+	Node
+)
+
+var providerNames = map[AvailableProviders]string{
+	Traefik: "traefik",
+	Nginx:   "nginx",
+	Node:    "node",
+}
+
+func (prov AvailableProviders) String() string {
+	return providerNames[prov]
+}
+
+type TraefikProvider struct {
+	Target string `yaml:"target"`
+}
+
+type NginxProvider struct {
+	Target string `yaml:"target"`
+}
+
 type Config struct {
-	Targets struct {
-		Traefik string `yaml:"traefik"`
-		Nginx   string `yaml:"nginx"`
-	} `yaml:"targets"`
-	Sites map[string]Service `yaml:"sites"`
+	Providers struct {
+		Traefik *TraefikProvider `yaml:"traefik,omitempty"`
+		Nginx   *NginxProvider   `yaml:"nginx,omitempty"`
+	} `yaml:"providers"`
+	Services map[string]Service `yaml:"services"`
 }
 
 type Service struct {
-	Domains  []string   `yaml:"domains"`
-	Provider string     `yaml:"provider"`
-	Port     int        `yaml:"port"`
-	PHP      *PHPConfig `yaml:"php,omitempty"`
+	Domains   []string   `yaml:"domains"`
+	Providers []string   `yaml:"providers"`
+	Port      int        `yaml:"port"`
+	PHP       *PHPConfig `yaml:"php,omitempty"`
+}
+
+func (s *Service) UnmarshalYAML(value *yaml.Node) error {
+	type rawService struct {
+		Domains   []string   `yaml:"domains"`
+		Providers []string   `yaml:"providers"`
+		Port      int        `yaml:"port"`
+		PHP       *PHPConfig `yaml:"php,omitempty"`
+	}
+	var raw rawService
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+	s.Domains = raw.Domains
+	s.Port = raw.Port
+	s.PHP = raw.PHP
+	s.Providers = raw.Providers
+	return nil
 }
 
 type PHPConfig struct {
@@ -27,24 +71,35 @@ type PHPConfig struct {
 }
 
 func (c *Config) Validate() error {
-	if c.Targets.Traefik == "" && c.Targets.Nginx == "" {
+	if c.Providers.Nginx == nil && c.Providers.Traefik == nil {
 		return fmt.Errorf("at least one target must be specified")
 	}
-	if len(c.Sites) == 0 {
+	if len(c.Services) == 0 {
 		return fmt.Errorf("at least one site must be specified")
 	}
-	for name, site := range c.Sites {
-		if len(site.Domains) == 0 {
+	for name, serv := range c.Services {
+		if len(serv.Domains) == 0 {
 			return fmt.Errorf("site %s must have at least one domain", name)
 		}
-		if site.Provider != "php" && site.Provider != "node" {
-			return fmt.Errorf("site %s has invalid provider %s", name, site.Provider)
+
+		for _, prov := range serv.Providers {
+			valid := false
+			for _, v := range providerNames {
+				if prov == v {
+					valid = true
+					break
+				}
+			}
+			if !valid {
+				return fmt.Errorf("site %s has an invalid provider: %s", name, prov)
+			}
 		}
-		if site.PHP != nil {
-			if site.PHP.Version == "" {
+
+		if serv.PHP != nil {
+			if serv.PHP.Version == "" {
 				return fmt.Errorf("site %s must specify a PHP version", name)
 			}
-			if site.PHP.Root == "" {
+			if serv.PHP.Root == "" {
 				return fmt.Errorf("site %s must specify a PHP root", name)
 			}
 		}

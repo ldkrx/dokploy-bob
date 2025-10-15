@@ -36,7 +36,7 @@ func EnsureDir(path string) error {
 	return nil
 }
 
-func Process(targetPath string, data *[]byte) error {
+func Process(targetPath string, data []byte) error {
 	EnsureDir(targetPath)
-	return os.WriteFile(targetPath, *data, 0644)
+	return os.WriteFile(targetPath, data, 0644)
 }

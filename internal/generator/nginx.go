@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"ldriko/dokploy-bob/internal/config"
+	"ldriko/dokploy-bob/internal/exporter"
 )
 
 type NginxConfig struct {
@@ -41,7 +42,49 @@ func (nc *NginxConfig) AddService(name string, svc config.Service) error {
 }
 
 func (nc *NginxConfig) Export(path string) error {
-	// todo: implement nginx config parsing
+	for name, service := range nc.Services {
+		filename := name + ".conf"
+		serverNames := ""
+		for i, domain := range service.ServerName {
+			if i > 0 {
+				serverNames += " "
+			}
+			serverNames += domain
+		}
+
+		data := fmt.Sprintf(`server {
+    listen 8080;
+    server_name %s;
+
+    root %s;
+    index index.php index.html index.htm;
+
+    access_log %s;
+    error_log %s;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \\.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/%s-fpm.sock;
+    }
+
+    location ~ /\\.ht {
+        deny all;
+    }
+}
+`,
+			serverNames,
+			service.PHP.Root,
+			service.AccessLog,
+			service.ErrorLog,
+			service.PHP.Version,
+		)
+
+		exporter.Process(path+"/"+filename, []byte(data))
+	}
 
 	return nil
 }

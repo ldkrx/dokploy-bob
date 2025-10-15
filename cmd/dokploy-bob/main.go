@@ -28,18 +28,28 @@ func main() {
 	traefikCfg := generator.NewTraefikConfig()
 	nginxCfg := generator.NewNginxConfig()
 
-	for name, service := range cfg.Sites {
-		err := traefikCfg.AddService(name, service)
-		if err != nil {
-			log.Fatalf("Error adding traefik service %s: %v", name, err)
-		}
-
-		err = nginxCfg.AddService(name, service)
-		if err != nil {
-			log.Fatalf("Error adding nginx service %s: %v", name, err)
+	for name, srv := range cfg.Services {
+		for _, prov := range srv.Providers {
+			switch prov {
+			case config.Traefik.String():
+				if err := traefikCfg.AddService(name, srv); err != nil {
+					log.Fatalf("Error adding traefik service %s: %v", name, err)
+				}
+			case config.Nginx.String():
+				if err := nginxCfg.AddService(name, srv); err != nil {
+					log.Fatalf("Error adding nginx service %s: %v", name, err)
+				}
+			}
 		}
 	}
 
-	traefikCfg.Export(cfg.Targets.Traefik)
-	nginxCfg.Export(cfg.Targets.Nginx)
+	err = traefikCfg.Export(cfg.Providers.Traefik.Target)
+	if err != nil {
+		log.Fatalf("Error exporting traefik config: %v", err)
+	}
+
+	err = nginxCfg.Export(cfg.Providers.Nginx.Target)
+	if err != nil {
+		log.Fatalf("Error exporting nginx config: %v", err)
+	}
 }

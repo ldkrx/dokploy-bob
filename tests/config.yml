@@ -1,16 +1,17 @@
-targets:
+providers:
   traefik: 
     target: ./tests/results/traefik.yaml
   nginx: 
-    target: ./tests/results/nginx.yaml
-    port: 8080
+    target: ./tests/results/nginx
 
-sites:
+services:
   service-1:
     domains:
       - example.com
       - www.example.com
-    provider: php
+    providers:
+      - traefik
+      - nginx
     port: 8080
     php:
       version: 8.1
@@ -20,5 +21,7 @@ sites:
     domains:
       - blog.example.com
       - www.blog.example.com
-    provider: node
+    providers: 
+      - traefik
+      - node
     port: 3000
