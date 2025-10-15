@@ -3,82 +3,97 @@ package generator
 import (
 	"fmt"
 	"ldriko/dokploy-bob/internal/config"
+	"ldriko/dokploy-bob/internal/exporter"
 	"strings"
 )
 
 type TraefikConfig struct {
-	HTTP HTTPConfig `yaml:"http"`
+	HTTP TraefikHTTPConfig `yaml:"http"`
 }
 
-type HTTPConfig struct {
-	Routers  map[string]Router  `yaml:"routers"`
-	Services map[string]Service `yaml:"services"`
+type TraefikHTTPConfig struct {
+	Routers  map[string]TraefikRouter  `yaml:"routers"`
+	Services map[string]TraefikService `yaml:"services"`
 }
 
-type Router struct {
-	Rule        string   `yaml:"rule"`
-	EntryPoints []string `yaml:"entryPoints"`
-	Service     string   `yaml:"service"`
-	TLS         *TLS     `yaml:"tls,omitempty"`
+type TraefikRouter struct {
+	Rule        string      `yaml:"rule"`
+	EntryPoints []string    `yaml:"entryPoints"`
+	Service     string      `yaml:"service"`
+	TLS         *TraefikTLS `yaml:"tls,omitempty"`
 }
 
-type TLS struct {
+type TraefikTLS struct {
 	CertResolver string `yaml:"certResolver"`
 }
 
-type Service struct {
-	LoadBalancer LoadBalancer `yaml:"loadBalancer"`
+type TraefikService struct {
+	LoadBalancer TraefikLoadBalancer `yaml:"loadBalancer"`
 }
 
-type LoadBalancer struct {
-	Servers []Server `yaml:"servers"`
+type TraefikLoadBalancer struct {
+	Servers []TraefikServer `yaml:"servers"`
 }
 
-type Server struct {
+type TraefikServer struct {
 	URL string `yaml:"url"`
 }
 
-func NewTraefik() *TraefikConfig {
+func NewTraefikConfig() *TraefikConfig {
 	return &TraefikConfig{
-		HTTP: HTTPConfig{
-			Routers:  make(map[string]Router),
-			Services: make(map[string]Service),
+		HTTP: TraefikHTTPConfig{
+			Routers:  make(map[string]TraefikRouter),
+			Services: make(map[string]TraefikService),
 		},
 	}
 }
 
-func (tc *TraefikConfig) AddService(name *string, svc *config.Service) error {
+func (tc *TraefikConfig) AddService(name string, svc config.Service) error {
 	var rules []string
 	for _, domain := range svc.Domains {
 		rules = append(rules, "Host(`"+domain+"`)")
 	}
 
-	router := Router{
+	router := TraefikRouter{
 		Rule:        strings.Join(rules, " || "),
 		EntryPoints: []string{"web", "websecure"},
-		Service:     *name,
-		TLS:         &TLS{CertResolver: "letsencrypt"},
+		Service:     name,
+		TLS:         &TraefikTLS{CertResolver: "letsencrypt"},
 	}
 
-	service := Service{
-		LoadBalancer: LoadBalancer{
-			Servers: []Server{
-				{URL: "http://" + *name + ":" + fmt.Sprint(svc.Port)},
+	service := TraefikService{
+		LoadBalancer: TraefikLoadBalancer{
+			Servers: []TraefikServer{
+				{URL: "http://" + name + ":" + fmt.Sprint(svc.Port)},
 			},
 		},
 	}
 
-	tc.HTTP.Routers[*name] = router
-	tc.HTTP.Services[*name] = service
+	tc.HTTP.Routers[name] = router
+	tc.HTTP.Services[name] = service
 
 	return nil
 }
 
 func (tc *TraefikConfig) ToYAML() ([]byte, error) {
-	data, err := MarshalToYAML(tc)
+	data, err := exporter.MarshalToYAML(tc)
 	if err != nil {
 		return nil, err
 	}
 
 	return data, nil
+}
+
+func (tc *TraefikConfig) Export(path string) error {
+	traefikYaml, err := tc.ToYAML()
+	if err != nil {
+		return err
+	}
+
+	err = exporter.Process(path, &traefikYaml)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

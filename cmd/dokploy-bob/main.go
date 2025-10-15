@@ -25,22 +25,21 @@ func main() {
 		log.Fatalf("Error parsing config file: %v", err)
 	}
 
-	traefikCfg := generator.NewTraefik()
+	traefikCfg := generator.NewTraefikConfig()
+	nginxCfg := generator.NewNginxConfig()
 
 	for name, service := range cfg.Sites {
-		err := traefikCfg.AddService(&name, &service)
+		err := traefikCfg.AddService(name, service)
 		if err != nil {
-			log.Fatalf("Error adding site %s: %v", name, err)
+			log.Fatalf("Error adding traefik service %s: %v", name, err)
+		}
+
+		err = nginxCfg.AddService(name, service)
+		if err != nil {
+			log.Fatalf("Error adding nginx service %s: %v", name, err)
 		}
 	}
 
-	traefikYaml, err := traefikCfg.ToYAML()
-	if err != nil {
-		log.Fatalf("Error converting Traefik config to YAML: %v", err)
-	}
-
-	err = generator.Process(cfg.Targets.Traefik, &traefikYaml)
-	if err != nil {
-		log.Fatalf("Error writing Traefik config to file: %v", err)
-	}
+	traefikCfg.Export(cfg.Targets.Traefik)
+	nginxCfg.Export(cfg.Targets.Nginx)
 }

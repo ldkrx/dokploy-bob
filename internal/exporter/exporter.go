@@ -1,4 +1,4 @@
-package generator
+package exporter
 
 import (
 	"os"
@@ -19,7 +19,7 @@ func MarshalToYAML(v interface{}) ([]byte, error) {
 	return []byte(sb.String()), nil
 }
 
-func getDir(filePath string) string {
+func GetDir(filePath string) string {
 	lastSlash := strings.LastIndex(filePath, "/")
 	if lastSlash == -1 {
 		return "."
@@ -27,11 +27,16 @@ func getDir(filePath string) string {
 	return filePath[:lastSlash]
 }
 
-func Process(targetPath string, data *[]byte) error {
-	err := os.MkdirAll(getDir(targetPath), 0755)
+func EnsureDir(path string) error {
+	err := os.MkdirAll(GetDir(path), 0755)
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func Process(targetPath string, data *[]byte) error {
+	EnsureDir(targetPath)
 	return os.WriteFile(targetPath, *data, 0644)
 }

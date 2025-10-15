@@ -1,6 +1,9 @@
 targets:
-  traefik: ./tests/results/traefik.yaml
-  nginx: ./tests/results/nginx.yaml
+  traefik: 
+    target: ./tests/results/traefik.yaml
+  nginx: 
+    target: ./tests/results/nginx.yaml
+    port: 8080
 
 sites:
   service-1:
