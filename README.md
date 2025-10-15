@@ -8,7 +8,6 @@ providers:
     target: /etc/dokploy/traefik/dynamic/host.yaml
   nginx:
     target: /etc/nginx/sites-available/generated
-    port: 8080
 
 sites:
   service-1:
