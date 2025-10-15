@@ -83,7 +83,10 @@ func (nc *NginxConfig) Export(path string) error {
 			service.PHP.Version,
 		)
 
-		exporter.Process(path+"/"+filename, []byte(data))
+		err := exporter.Process(path+"/"+filename, []byte(data))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
