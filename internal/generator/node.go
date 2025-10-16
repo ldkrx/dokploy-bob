@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"ldriko/dokploy-bob/internal/config"
 	"ldriko/dokploy-bob/internal/exporter"
+	"strings"
 )
 
 type NodeConfig struct {
@@ -40,15 +41,21 @@ func (nc *NodeConfig) AddService(name string, svc *config.Service, pi config.Pro
 			env[k] = v
 		}
 		script := npc.Script
+		args := npc.Args
 		interpreter := npc.Interpreter
 		if npc.UseNvmrc && npc.CWD != "" {
-			script = "source ~/.nvm/nvm.sh && nvm use && " + npc.Script
-			interpreter = "/bin/bash"
+			fullCommand := "source ~/.nvm/nvm.sh && nvm use && " + npc.Script
+			if len(npc.Args) > 0 {
+				fullCommand += " " + strings.Join(npc.Args, " ")
+			}
+			script = "/bin/bash"
+			args = []string{"-c", fullCommand}
+			interpreter = ""
 		}
 		service := NodeServices{
 			Name:        name,
 			Script:      script,
-			Args:        npc.Args,
+			Args:        args,
 			Interpreter: interpreter,
 			CWD:         npc.CWD,
 			PostUpdate:  npc.PostUpdate,

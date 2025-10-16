@@ -28,10 +28,10 @@ services:
     providers:
       - traefik
       - node:
-          script: pnpm start
           cwd: /var/www/service-2
+          script: pnpm start
           use_nvmrc: true
-          post-update:
+          post_update:
             - pnpm install
 
   service-3:
