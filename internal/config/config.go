@@ -40,6 +40,7 @@ type PHPConfig struct {
 
 type NodeConfig struct {
 	Script      string   `yaml:"script"`
+	Args        []string `yaml:"args,omitempty"`
 	Interpreter string   `yaml:"interpreter,omitempty"`
 	PostUpdate  []string `yaml:"post_update,omitempty"`
 }

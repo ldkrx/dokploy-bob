@@ -18,6 +18,7 @@ type NodeEnv struct {
 type NodeServices struct {
 	Name        string   `json:"name"`
 	Script      string   `json:"script"`
+	Args        []string `json:"args,omitempty"`
 	Interpreter string   `json:"interpreter"`
 	PostUpdate  []string `json:"post_update,omitempty"`
 	Env         *NodeEnv `json:"env"`
@@ -37,6 +38,7 @@ func (nc *NodeConfig) AddService(name string, svc *config.Service) error {
 	service := NodeServices{
 		Name:        name,
 		Script:      svc.Node.Script,
+		Args:        svc.Node.Args,
 		Interpreter: svc.Node.Interpreter,
 		PostUpdate:  svc.Node.PostUpdate,
 		Env: &NodeEnv{

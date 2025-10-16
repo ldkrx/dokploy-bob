@@ -28,7 +28,9 @@ services:
       - node
     port: 3001
     node:
-      script: /var/www/service-2/server.js
+      script: /var/www/service-2/bin/www
+      args: 
+        - -r dotenv/config
       interpreter: /root/.nvm/versions/node/v22.20.0/bin/node
       post-update:
-        - npm install
+        - pnpm install
