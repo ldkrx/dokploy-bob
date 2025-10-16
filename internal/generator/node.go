@@ -11,17 +11,14 @@ type NodeConfig struct {
 	Services []NodeServices `json:"apps"`
 }
 
-type NodeEnv struct {
-	Port int `json:"PORT"`
-}
-
 type NodeServices struct {
-	Name        string   `json:"name"`
-	Script      string   `json:"script"`
-	Args        []string `json:"args,omitempty"`
-	Interpreter string   `json:"interpreter"`
-	PostUpdate  []string `json:"post_update,omitempty"`
-	Env         *NodeEnv `json:"env"`
+	Name        string                 `json:"name"`
+	CWD         string                 `json:"cwd,omitempty"`
+	Script      string                 `json:"script"`
+	Args        []string               `json:"args,omitempty"`
+	Interpreter string                 `json:"interpreter,omitempty"`
+	PostUpdate  []string               `json:"post_update,omitempty"`
+	Env         map[string]interface{} `json:"env"`
 }
 
 func NewNodeConfig() *NodeConfig {
@@ -36,15 +33,26 @@ func (nc *NodeConfig) SetTarget(target string) {
 
 func (nc *NodeConfig) AddService(name string, svc *config.Service, pi config.ProviderInstance) error {
 	if npc, ok := pi.Config.(*config.NodeProviderConfig); ok {
+		env := map[string]interface{}{
+			"PORT": svc.Port,
+		}
+		for k, v := range npc.Env {
+			env[k] = v
+		}
+		script := npc.Script
+		interpreter := npc.Interpreter
+		if npc.UseNvmrc && npc.CWD != "" {
+			script = "source ~/.nvm/nvm.sh && nvm use && " + npc.Script
+			interpreter = "/bin/bash"
+		}
 		service := NodeServices{
 			Name:        name,
-			Script:      npc.Script,
+			Script:      script,
 			Args:        npc.Args,
-			Interpreter: npc.Interpreter,
+			Interpreter: interpreter,
+			CWD:         npc.CWD,
 			PostUpdate:  npc.PostUpdate,
-			Env: &NodeEnv{
-				Port: svc.Port,
-			},
+			Env:         env,
 		}
 
 		nc.Services = append(nc.Services, service)

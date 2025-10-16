@@ -28,10 +28,9 @@ services:
     providers:
       - traefik
       - node:
-          script: /var/www/service-2/bin/www
-          args:
-            - -r dotenv/config
-          interpreter: /root/.nvm/versions/node/v22.20.0/bin/node
+          script: pnpm start
+          cwd: /var/www/service-2
+          use_nvmrc: true
           post-update:
             - pnpm install
 

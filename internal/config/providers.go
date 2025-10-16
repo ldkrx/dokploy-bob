@@ -22,10 +22,13 @@ func (npc *NginxProviderConfig) Validate() error {
 }
 
 type NodeProviderConfig struct {
-	Script      string   `yaml:"script"`
-	Args        []string `yaml:"args,omitempty"`
-	Interpreter string   `yaml:"interpreter,omitempty"`
-	PostUpdate  []string `yaml:"post_update,omitempty"`
+	Script      string            `yaml:"script"`
+	Args        []string          `yaml:"args,omitempty"`
+	Interpreter string            `yaml:"interpreter,omitempty"`
+	CWD         string            `yaml:"cwd,omitempty"`
+	PostUpdate  []string          `yaml:"post_update,omitempty"`
+	Env         map[string]string `yaml:"env,omitempty"`
+	UseNvmrc    bool              `yaml:"use_nvmrc,omitempty"`
 }
 
 func (npc *NodeProviderConfig) Validate() error {
