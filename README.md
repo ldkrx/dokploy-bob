@@ -105,16 +105,16 @@ server {
 
 ```json
 {
-  "apps": {
-    "service-2": {
-      "name": "service-2",
-      "script": "/var/www/service-2/server.js",
-      "interpreter": "/root/.nvm/versions/node/v22.20.0/bin/node",
-      "env": {
-        "PORT": 3001
-      }
-    }
-  }
+    "apps": [
+        {
+            "name": "service-2",
+            "script": "/var/www/service-2/server.js",
+            "interpreter": "/root/.nvm/versions/node/v22.20.0/bin/node",
+            "env": {
+                "PORT": 3001
+            }
+        }
+    ]
 }
 ```
 
