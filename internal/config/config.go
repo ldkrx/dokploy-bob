@@ -24,35 +24,41 @@ func (prov AvailableProviders) String() string {
 	return providerNames[prov]
 }
 
-type TraefikProvider struct {
-	Target string `yaml:"target"`
-}
-
-type NginxProvider struct {
+type Provider struct {
 	Target string `yaml:"target"`
 }
 
 type Config struct {
-	Providers struct {
-		Traefik *TraefikProvider `yaml:"traefik,omitempty"`
-		Nginx   *NginxProvider   `yaml:"nginx,omitempty"`
-	} `yaml:"providers"`
-	Services map[string]Service `yaml:"services"`
+	Providers map[string]*Provider `yaml:"providers"`
+	Services  map[string]*Service  `yaml:"services"`
+}
+
+type PHPConfig struct {
+	Version string `yaml:"version"`
+	Root    string `yaml:"root"`
+}
+
+type NodeConfig struct {
+	Script      string   `yaml:"script"`
+	Interpreter string   `yaml:"interpreter,omitempty"`
+	PostUpdate  []string `yaml:"post_update,omitempty"`
 }
 
 type Service struct {
-	Domains   []string   `yaml:"domains"`
-	Providers []string   `yaml:"providers"`
-	Port      int        `yaml:"port"`
-	PHP       *PHPConfig `yaml:"php,omitempty"`
+	Domains   []string    `yaml:"domains"`
+	Providers []string    `yaml:"providers"`
+	Port      int         `yaml:"port"`
+	PHP       *PHPConfig  `yaml:"php,omitempty"`
+	Node      *NodeConfig `yaml:"node,omitempty"`
 }
 
 func (s *Service) UnmarshalYAML(value *yaml.Node) error {
 	type rawService struct {
-		Domains   []string   `yaml:"domains"`
-		Providers []string   `yaml:"providers"`
-		Port      int        `yaml:"port"`
-		PHP       *PHPConfig `yaml:"php,omitempty"`
+		Domains   []string    `yaml:"domains"`
+		Providers []string    `yaml:"providers"`
+		Port      int         `yaml:"port"`
+		PHP       *PHPConfig  `yaml:"php,omitempty"`
+		Node      *NodeConfig `yaml:"node,omitempty"`
 	}
 	var raw rawService
 	if err := value.Decode(&raw); err != nil {
@@ -62,16 +68,12 @@ func (s *Service) UnmarshalYAML(value *yaml.Node) error {
 	s.Port = raw.Port
 	s.PHP = raw.PHP
 	s.Providers = raw.Providers
+	s.Node = raw.Node
 	return nil
 }
 
-type PHPConfig struct {
-	Version string `yaml:"version"`
-	Root    string `yaml:"root"`
-}
-
 func (c *Config) Validate() error {
-	if c.Providers.Nginx == nil && c.Providers.Traefik == nil {
+	if len(c.Providers) == 0 {
 		return fmt.Errorf("at least one target must be specified")
 	}
 	if len(c.Services) == 0 {

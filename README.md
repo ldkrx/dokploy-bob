@@ -4,10 +4,12 @@ Bob will generate traefik and nginx config from a yaml file like this:
 
 ```yaml
 providers:
-  traefik: 
-    target: ./tests/results/traefik.yaml
-  nginx: 
-    target: ./tests/results/nginx
+  traefik:
+    target: /etc/traefik/dynamics/host.yaml
+  nginx:
+    target: /etc/nginx/sites-available/generated
+  node:
+    target: /root/node-apps.json
 
 services:
   service-1:
@@ -26,10 +28,15 @@ services:
     domains:
       - blog.example.com
       - www.blog.example.com
-    providers: 
+    providers:
       - traefik
       - node
-    port: 3000
+    port: 3001
+    node:
+      script: /var/www/service-2/server.js
+      interpreter: /root/.nvm/versions/node/v22.20.0/bin/node
+      post-update:
+        - npm install
 ```
 
 To This:
@@ -59,16 +66,16 @@ http:
     service-1:
       loadBalancer:
         servers:
-          - url: http://service-1:8080
+          - url: http://172.17.0.1:8080
     service-2:
       loadBalancer:
         servers:
-          - url: http://service-2:3000
+          - url: http://172.17.0.1:3001
 ```
 
 **`/etc/nginx/sites-available/generated/service-1.conf`**:
 
-```
+```conf
 server {
     listen 8080;
     server_name example.com www.example.com;
@@ -94,8 +101,25 @@ server {
 }
 ```
 
+**`/root/node-apps.json`**
+
+```json
+{
+  "apps": {
+    "service-2": {
+      "name": "service-2",
+      "script": "/var/www/service-2/server.js",
+      "interpreter": "/root/.nvm/versions/node/v22.20.0/bin/node",
+      "env": {
+        "PORT": 3001
+      }
+    }
+  }
+}
+```
+
 #### When is Bob useful:
 
-- Need to serve Nginx (:8080), Node (:4xxx), and Dokploy (:80 and :443)
+- Need to serve Nginx (:8080), Node (:3xxx), and Dokploy (:80 and :443)
 - Too lazy to setup these configs
 - Using Traefik as a reverse proxy to Nginx / Node / basically anything

@@ -25,31 +25,25 @@ func main() {
 		log.Fatalf("Error parsing config file: %v", err)
 	}
 
-	traefikCfg := generator.NewTraefikConfig()
-	nginxCfg := generator.NewNginxConfig()
+	for name, gc := range generator.Configs {
+		gc.SetTarget(cfg.Providers[name].Target)
+	}
 
 	for name, srv := range cfg.Services {
 		for _, prov := range srv.Providers {
-			switch prov {
-			case config.Traefik.String():
-				if err := traefikCfg.AddService(name, srv); err != nil {
-					log.Fatalf("Error adding traefik service %s: %v", name, err)
-				}
-			case config.Nginx.String():
-				if err := nginxCfg.AddService(name, srv); err != nil {
-					log.Fatalf("Error adding nginx service %s: %v", name, err)
+			if gc, ok := generator.Configs[prov]; ok {
+				if err := gc.AddService(name, srv); err != nil {
+					log.Fatalf("Error adding %s service %s: %v", prov, name, err)
 				}
 			}
 		}
 	}
 
-	err = traefikCfg.Export(cfg.Providers.Traefik.Target)
-	if err != nil {
-		log.Fatalf("Error exporting traefik config: %v", err)
-	}
-
-	err = nginxCfg.Export(cfg.Providers.Nginx.Target)
-	if err != nil {
-		log.Fatalf("Error exporting nginx config: %v", err)
+	for _, gc := range generator.Configs {
+		if gc.GetTarget() != "" {
+			if err := gc.Export(gc.GetTarget()); err != nil {
+				log.Fatalf("Error exporting config: %v", err)
+			}
+		}
 	}
 }

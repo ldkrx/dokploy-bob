@@ -8,7 +8,8 @@ import (
 )
 
 type TraefikConfig struct {
-	HTTP TraefikHTTPConfig `yaml:"http"`
+	Target string            `yaml:"-"`
+	HTTP   TraefikHTTPConfig `yaml:"http"`
 }
 
 type TraefikHTTPConfig struct {
@@ -48,7 +49,15 @@ func NewTraefikConfig() *TraefikConfig {
 	}
 }
 
-func (tc *TraefikConfig) AddService(name string, svc config.Service) error {
+func (tc *TraefikConfig) SetTarget(target string) {
+	tc.Target = target
+}
+
+func (tc *TraefikConfig) GetTarget() string {
+	return tc.Target
+}
+
+func (tc *TraefikConfig) AddService(name string, svc *config.Service) error {
 	var rules []string
 	for _, domain := range svc.Domains {
 		rules = append(rules, "Host(`"+domain+"`)")

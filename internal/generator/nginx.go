@@ -7,17 +7,15 @@ import (
 )
 
 type NginxConfig struct {
+	Target   string `yaml:"-"`
 	Services map[string]NginxService
 }
 
 type NginxService struct {
 	ServerName []string
-	PHP        struct {
-		Version string
-		Root    string
-	}
-	AccessLog string
-	ErrorLog  string
+	PHP        config.PHPConfig
+	AccessLog  string
+	ErrorLog   string
 }
 
 func NewNginxConfig() *NginxConfig {
@@ -26,7 +24,11 @@ func NewNginxConfig() *NginxConfig {
 	}
 }
 
-func (nc *NginxConfig) AddService(name string, svc config.Service) error {
+func (nc *NginxConfig) SetTarget(target string) {
+	nc.Target = target
+}
+
+func (nc *NginxConfig) AddService(name string, svc *config.Service) error {
 	service := NginxService{
 		ServerName: svc.Domains,
 		AccessLog:  fmt.Sprintf("/var/log/nginx/%s.access.log", name),
@@ -90,4 +92,8 @@ func (nc *NginxConfig) Export(path string) error {
 	}
 
 	return nil
+}
+
+func (nc *NginxConfig) GetTarget() string {
+	return nc.Target
 }
