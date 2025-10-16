@@ -7,8 +7,8 @@ import (
 )
 
 type NodeConfig struct {
-	Target   string                  `json:"-"`
-	Services map[string]NodeServices `json:"apps"`
+	Target   string         `json:"-"`
+	Services []NodeServices `json:"apps"`
 }
 
 type NodeEnv struct {
@@ -25,7 +25,7 @@ type NodeServices struct {
 
 func NewNodeConfig() *NodeConfig {
 	return &NodeConfig{
-		Services: make(map[string]NodeServices),
+		Services: []NodeServices{},
 	}
 }
 
@@ -44,13 +44,13 @@ func (nc *NodeConfig) AddService(name string, svc *config.Service) error {
 		},
 	}
 
-	nc.Services[name] = service
+	nc.Services = append(nc.Services, service)
 
 	return nil
 }
 
 func (nc *NodeConfig) Export(path string) error {
-	data, err := json.MarshalIndent(nc, "", "  ")
+	data, err := json.MarshalIndent(nc, "", "    ")
 	if err != nil {
 		return err
 	}
