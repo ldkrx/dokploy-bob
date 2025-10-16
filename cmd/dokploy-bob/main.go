@@ -30,10 +30,10 @@ func main() {
 	}
 
 	for name, srv := range cfg.Services {
-		for _, prov := range srv.Providers {
-			if gc, ok := generator.Configs[prov]; ok {
-				if err := gc.AddService(name, srv); err != nil {
-					log.Fatalf("Error adding %s service %s: %v", prov, name, err)
+		for _, pi := range srv.Providers {
+			if gc, ok := generator.Configs[pi.Name]; ok {
+				if err := gc.AddService(name, srv, pi); err != nil {
+					log.Fatalf("Error adding %s service %s: %v", pi.Name, name, err)
 				}
 			}
 		}

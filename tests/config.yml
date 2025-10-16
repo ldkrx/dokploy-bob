@@ -11,26 +11,37 @@ services:
     domains:
       - example.com
       - www.example.com
+    port: 8080
     providers:
       - traefik
-      - nginx
-    port: 8080
-    php:
-      version: 8.1
-      root: /var/www/service-1/public
+      - nginx:
+          type: php
+          root: /var/www/service-1/public
+          php:
+            version: 8.1
 
   service-2:
     domains:
-      - blog.example.com
-      - www.blog.example.com
+      - api.blog.example.com
+      - www.api.blog.example.com
+    port: 3001
     providers:
       - traefik
-      - node
-    port: 3001
-    node:
-      script: /var/www/service-2/bin/www
-      args: 
-        - -r dotenv/config
-      interpreter: /root/.nvm/versions/node/v22.20.0/bin/node
-      post-update:
-        - pnpm install
+      - node:
+          script: /var/www/service-2/bin/www
+          args:
+            - -r dotenv/config
+          interpreter: /root/.nvm/versions/node/v22.20.0/bin/node
+          post-update:
+            - pnpm install
+
+  service-3:
+    domains:
+      - blog.example.com
+      - www.blog.example.com
+    port: 8080
+    providers:
+      - traefik
+      - nginx:
+          type: static
+          root: /var/www/service-3/dist

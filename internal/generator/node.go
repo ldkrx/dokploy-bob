@@ -34,19 +34,21 @@ func (nc *NodeConfig) SetTarget(target string) {
 	nc.Target = target
 }
 
-func (nc *NodeConfig) AddService(name string, svc *config.Service) error {
-	service := NodeServices{
-		Name:        name,
-		Script:      svc.Node.Script,
-		Args:        svc.Node.Args,
-		Interpreter: svc.Node.Interpreter,
-		PostUpdate:  svc.Node.PostUpdate,
-		Env: &NodeEnv{
-			Port: svc.Port,
-		},
-	}
+func (nc *NodeConfig) AddService(name string, svc *config.Service, pi config.ProviderInstance) error {
+	if npc, ok := pi.Config.(*config.NodeProviderConfig); ok {
+		service := NodeServices{
+			Name:        name,
+			Script:      npc.Script,
+			Args:        npc.Args,
+			Interpreter: npc.Interpreter,
+			PostUpdate:  npc.PostUpdate,
+			Env: &NodeEnv{
+				Port: svc.Port,
+			},
+		}
 
-	nc.Services = append(nc.Services, service)
+		nc.Services = append(nc.Services, service)
+	}
 
 	return nil
 }

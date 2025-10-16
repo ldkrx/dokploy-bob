@@ -28,15 +28,19 @@ func (nc *NginxConfig) SetTarget(target string) {
 	nc.Target = target
 }
 
-func (nc *NginxConfig) AddService(name string, svc *config.Service) error {
+func (nc *NginxConfig) AddService(name string, svc *config.Service, pi config.ProviderInstance) error {
 	service := NginxService{
 		ServerName: svc.Domains,
 		AccessLog:  fmt.Sprintf("/var/log/nginx/%s.access.log", name),
 		ErrorLog:   fmt.Sprintf("/var/log/nginx/%s.error.log", name),
 	}
 
-	service.PHP.Version = svc.PHP.Version
-	service.PHP.Root = svc.PHP.Root
+	if npc, ok := pi.Config.(*config.NginxProviderConfig); ok {
+		service.PHP.Root = npc.Root
+		if npc.Type == "php" {
+			service.PHP.Version = npc.PHP.Version
+		}
+	}
 
 	nc.Services[name] = service
 
@@ -54,7 +58,9 @@ func (nc *NginxConfig) Export(path string) error {
 			serverNames += domain
 		}
 
-		data := fmt.Sprintf(`server {
+		var data string
+		if service.PHP.Version != "" {
+			data = fmt.Sprintf(`server {
     listen 8080;
     server_name %s;
 
@@ -78,12 +84,43 @@ func (nc *NginxConfig) Export(path string) error {
     }
 }
 `,
-			serverNames,
-			service.PHP.Root,
-			service.AccessLog,
-			service.ErrorLog,
-			service.PHP.Version,
-		)
+				serverNames,
+				service.PHP.Root,
+				service.AccessLog,
+				service.ErrorLog,
+				service.PHP.Version,
+			)
+		} else {
+			data = fmt.Sprintf(`server {
+    listen 8080;
+    server_name %s;
+
+    root %s;
+    index index.html index.htm;
+
+    access_log %s;
+    error_log %s;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location ~ /\\.ht {
+        deny all;
+    }
+		
+	location ~* \.(?:js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {
+		expires 1y;
+		add_header Cache-Control "public, immutable";
+	}
+}
+`,
+				serverNames,
+				service.PHP.Root,
+				service.AccessLog,
+				service.ErrorLog,
+			)
+		}
 
 		err := exporter.Process(path+"/"+filename, []byte(data))
 		if err != nil {

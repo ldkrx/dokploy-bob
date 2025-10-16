@@ -57,7 +57,7 @@ func (tc *TraefikConfig) GetTarget() string {
 	return tc.Target
 }
 
-func (tc *TraefikConfig) AddService(name string, svc *config.Service) error {
+func (tc *TraefikConfig) AddService(name string, svc *config.Service, pi config.ProviderInstance) error {
 	var rules []string
 	for _, domain := range svc.Domains {
 		rules = append(rules, "Host(`"+domain+"`)")
