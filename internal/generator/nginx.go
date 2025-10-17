@@ -64,6 +64,12 @@ func (nc *NginxConfig) Export(path string) error {
     listen 8080;
     server_name %s;
 
+    # Set HTTPS based on forwarded protocol from Traefik
+    set $https "";
+    if ($http_x_forwarded_proto = "https") {
+        set $https "on";
+    }
+
     root %s;
     index index.php index.html index.htm;
 
@@ -77,6 +83,17 @@ func (nc *NginxConfig) Export(path string) error {
     location ~ \\.php$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php%s-fpm.sock;
+
+        # Forward proxy headers to PHP-FPM
+        fastcgi_param HTTP_X_FORWARDED_FOR $proxy_add_x_forwarded_for;
+        fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
+        fastcgi_param HTTP_X_FORWARDED_HOST $http_x_forwarded_host;
+        fastcgi_param HTTP_X_FORWARDED_PORT $http_x_forwarded_port;
+        
+        # Tell Laravel the request scheme (http/https)
+        fastcgi_param HTTPS $https if_not_empty;
+        
+        include fastcgi_params;
     }
 
     location ~ /\\.ht {
