@@ -64,7 +64,7 @@ func (nc *NginxConfig) Export(path string) error {
     listen 8080;
     server_name %s;
 
-    set $https $https_flag;
+    set $php_https $https_flag;
 
     root %s;
     index index.php index.html index.htm;
@@ -87,7 +87,7 @@ func (nc *NginxConfig) Export(path string) error {
         fastcgi_param HTTP_X_FORWARDED_PORT $http_x_forwarded_port;
         
         # Tell Laravel the request scheme (http/https)
-        fastcgi_param HTTPS $https if_not_empty;
+        fastcgi_param HTTPS $php_https if_not_empty;
         
         include fastcgi_params;
     }
