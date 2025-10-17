@@ -64,11 +64,7 @@ func (nc *NginxConfig) Export(path string) error {
     listen 8080;
     server_name %s;
 
-    # Set HTTPS based on forwarded protocol from Traefik
-    set $https "";
-    if ($http_x_forwarded_proto = "https") {
-        set $https "on";
-    }
+    set $https $https_flag;
 
     root %s;
     index index.php index.html index.htm;
