@@ -78,14 +78,18 @@ func (nc *NginxConfig) Export(path string) error {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php%s-fpm.sock;
 
-		# Forward proxy headers to PHP-FPM
-		fastcgi_param HTTP_X_FORWARDED_FOR $proxy_add_x_forwarded_for;
-		fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
-		fastcgi_param HTTP_X_FORWARDED_HOST $http_x_forwarded_host;
-		fastcgi_param HTTP_X_FORWARDED_PORT $http_x_forwarded_port;
-		
-		# Tell Laravel the request scheme (http/https)
-		fastcgi_param HTTPS $https if_not_empty;
+        # Forward proxy headers to PHP-FPM
+        fastcgi_param HTTP_X_FORWARDED_FOR $proxy_add_x_forwarded_for;
+        fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
+        fastcgi_param HTTP_X_FORWARDED_HOST $http_x_forwarded_host;
+        fastcgi_param HTTP_X_FORWARDED_PORT $http_x_forwarded_port;
+
+        # Mark HTTPS if proxied as https
+        set $https_off "";
+        if ($http_x_forwarded_proto = "https") {
+            set $https_off on;
+        }
+        fastcgi_param HTTPS $https_off;
         
         include fastcgi_params;
     }
