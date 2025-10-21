@@ -6,6 +6,15 @@ import (
 	"ldriko/dokploy-bob/internal/exporter"
 )
 
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
+}
+
 type NginxConfig struct {
 	Target   string `yaml:"-"`
 	Services map[string]NginxService
@@ -15,6 +24,7 @@ type NginxService struct {
 	ServerName []string
 	PHP        config.PHPConfig
 	Includes   []string
+	Skip       []string
 	AccessLog  string
 	ErrorLog   string
 }
@@ -39,6 +49,7 @@ func (nc *NginxConfig) AddService(name string, svc *config.Service, pi config.Pr
 
 	if npc, ok := pi.Config.(*config.NginxProviderConfig); ok {
 		service.Includes = npc.Includes
+		service.Skip = npc.Skip
 		service.PHP.Root = npc.Root
 		if npc.Type == "php" {
 			service.PHP.Version = npc.PHP.Version
@@ -79,11 +90,21 @@ func (nc *NginxConfig) Export(path string) error {
 
     access_log %s;
     error_log %s;
-
+`,
+				serverNames,
+				service.PHP.Root,
+				includes,
+				service.AccessLog,
+				service.ErrorLog,
+			)
+			if !contains(service.Skip, "location") {
+				data += `
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
-
+`
+			}
+			data += fmt.Sprintf(`
     location ~ \\.php$ {
         include snippets/fastcgi-php.conf;
         fastcgi_pass unix:/run/php/php%s-fpm.sock;
@@ -109,11 +130,6 @@ func (nc *NginxConfig) Export(path string) error {
     }
 }
 `,
-				serverNames,
-				service.PHP.Root,
-				includes,
-				service.AccessLog,
-				service.ErrorLog,
 				service.PHP.Version,
 			)
 		} else {
@@ -126,10 +142,20 @@ func (nc *NginxConfig) Export(path string) error {
 
     access_log %s;
     error_log %s;
-
+`,
+				serverNames,
+				service.PHP.Root,
+				service.AccessLog,
+				service.ErrorLog,
+			)
+			if !contains(service.Skip, "location") {
+				data += `
     location / {
         try_files $uri $uri/ /index.html;
     }
+`
+			}
+			data += `
 
     location ~ /\\.ht {
         deny all;
@@ -140,12 +166,7 @@ func (nc *NginxConfig) Export(path string) error {
 		add_header Cache-Control "public, immutable";
 	}
 }
-`,
-				serverNames,
-				service.PHP.Root,
-				service.AccessLog,
-				service.ErrorLog,
-			)
+`
 		}
 
 		err := exporter.Process(path+"/"+filename, []byte(data))

@@ -6,6 +6,7 @@ type NginxProviderConfig struct {
 	Type     string    `yaml:"type"`
 	Root     string    `yaml:"root"`
 	Includes []string  `yaml:"includes,omitempty"`
+	Skip     []string  `yaml:"skip,omitempty"`
 	PHP      PHPConfig `yaml:"php"`
 }
 
@@ -18,6 +19,11 @@ func (npc *NginxProviderConfig) Validate() error {
 	}
 	if npc.Root == "" {
 		return fmt.Errorf("nginx provider must specify root")
+	}
+	for _, s := range npc.Skip {
+		if s != "location" {
+			fmt.Printf("Warning: unknown skip value '%s' in nginx provider, only 'location' is supported\n", s)
+		}
 	}
 	return nil
 }

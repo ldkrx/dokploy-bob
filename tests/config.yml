@@ -19,6 +19,8 @@ services:
           root: /var/www/service-1/public
           includes: 
             - /var/www/service-1/.nginx.conf
+          skip:
+            - location
           php:
             version: 8.1
 
