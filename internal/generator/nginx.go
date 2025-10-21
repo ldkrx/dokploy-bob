@@ -38,7 +38,7 @@ func (nc *NginxConfig) AddService(name string, svc *config.Service, pi config.Pr
 	}
 
 	if npc, ok := pi.Config.(*config.NginxProviderConfig); ok {
-		service.Includes = npc.Include
+		service.Includes = npc.Includes
 		service.PHP.Root = npc.Root
 		if npc.Type == "php" {
 			service.PHP.Version = npc.PHP.Version

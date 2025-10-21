@@ -17,7 +17,7 @@ services:
       - nginx:
           type: php
           root: /var/www/service-1/public
-          include: 
+          includes: 
             - /var/www/service-1/.nginx.conf
           php:
             version: 8.1
