@@ -14,6 +14,7 @@ type NginxConfig struct {
 type NginxService struct {
 	ServerName []string
 	PHP        config.PHPConfig
+	Includes   []string
 	AccessLog  string
 	ErrorLog   string
 }
@@ -33,9 +34,11 @@ func (nc *NginxConfig) AddService(name string, svc *config.Service, pi config.Pr
 		ServerName: svc.Domains,
 		AccessLog:  fmt.Sprintf("/var/log/nginx/%s.access.log", name),
 		ErrorLog:   fmt.Sprintf("/var/log/nginx/%s.error.log", name),
+		Includes:   []string{},
 	}
 
 	if npc, ok := pi.Config.(*config.NginxProviderConfig); ok {
+		service.Includes = npc.Include
 		service.PHP.Root = npc.Root
 		if npc.Type == "php" {
 			service.PHP.Version = npc.PHP.Version
@@ -51,11 +54,16 @@ func (nc *NginxConfig) Export(path string) error {
 	for name, service := range nc.Services {
 		filename := name + ".conf"
 		serverNames := ""
+		includes := ""
 		for i, domain := range service.ServerName {
 			if i > 0 {
 				serverNames += " "
 			}
 			serverNames += domain
+		}
+
+		for _, inc := range nc.Services[name].Includes {
+			includes += fmt.Sprintf("include %s;\n    ", inc)
 		}
 
 		var data string
@@ -66,6 +74,8 @@ func (nc *NginxConfig) Export(path string) error {
 
     root %s;
     index index.php index.html index.htm;
+
+    %s
 
     access_log %s;
     error_log %s;
@@ -101,6 +111,7 @@ func (nc *NginxConfig) Export(path string) error {
 `,
 				serverNames,
 				service.PHP.Root,
+				includes,
 				service.AccessLog,
 				service.ErrorLog,
 				service.PHP.Version,

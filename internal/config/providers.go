@@ -3,9 +3,10 @@ package config
 import "fmt"
 
 type NginxProviderConfig struct {
-	Type string    `yaml:"type"`
-	Root string    `yaml:"root"`
-	PHP  PHPConfig `yaml:"php"`
+	Type    string    `yaml:"type"`
+	Root    string    `yaml:"root"`
+	Include []string  `yaml:"include,omitempty"`
+	PHP     PHPConfig `yaml:"php"`
 }
 
 func (npc *NginxProviderConfig) Validate() error {
