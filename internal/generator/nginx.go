@@ -27,6 +27,7 @@ type NginxService struct {
 	Skip       []string
 	AccessLog  string
 	ErrorLog   string
+	Port       int
 }
 
 func NewNginxConfig() *NginxConfig {
@@ -45,6 +46,7 @@ func (nc *NginxConfig) AddService(name string, svc *config.Service, pi config.Pr
 		AccessLog:  fmt.Sprintf("/var/log/nginx/%s.access.log", name),
 		ErrorLog:   fmt.Sprintf("/var/log/nginx/%s.error.log", name),
 		Includes:   []string{},
+		Port:       8080,
 	}
 
 	if npc, ok := pi.Config.(*config.NginxProviderConfig); ok {
@@ -54,6 +56,11 @@ func (nc *NginxConfig) AddService(name string, svc *config.Service, pi config.Pr
 		if npc.Type == "php" {
 			service.PHP.Version = npc.PHP.Version
 		}
+	}
+
+	// If Service defines a port, override the default
+	if svc.Port > 0 {
+		service.Port = svc.Port
 	}
 
 	nc.Services[name] = service
@@ -80,10 +87,10 @@ func (nc *NginxConfig) Export(path string) error {
 		var data string
 		if service.PHP.Version != "" {
 			data = fmt.Sprintf(`server {
-    listen 8080;
-    server_name %s;
+	listen %d;
+	server_name %s;
 
-    root %s;
+	root %s;
     index index.php index.html index.htm;
 
     %s
@@ -91,6 +98,7 @@ func (nc *NginxConfig) Export(path string) error {
     access_log %s;
     error_log %s;
 `,
+				service.Port,
 				serverNames,
 				service.PHP.Root,
 				includes,
@@ -134,15 +142,16 @@ func (nc *NginxConfig) Export(path string) error {
 			)
 		} else {
 			data = fmt.Sprintf(`server {
-    listen 8080;
-    server_name %s;
+		    listen %d;
+		    server_name %s;
 
-    root %s;
+		    root %s;
     index index.html index.htm;
 
     access_log %s;
     error_log %s;
 `,
+				service.Port,
 				serverNames,
 				service.PHP.Root,
 				service.AccessLog,
